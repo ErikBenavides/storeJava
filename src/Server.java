@@ -17,7 +17,7 @@ public class Server implements Serializable{
 
 	public Server(int port){
 		try{
-			//Crear servidor en el puerto 3000
+			//Crear servidor en el puerto
 			path = "./server/";
 			serverSocket = new ServerSocket(3000);
 			products = new ArrayList<Product>();
@@ -63,9 +63,30 @@ public class Server implements Serializable{
 					this.getProducts();
 
 				} else if(action.equals("getProductsImage")){
-					name = in.readUTF();
-					System.out.println(name);
+					name = in.readUTF();					
 					sendImage(name);
+				} else if(action.equals("validateStock")) {
+					
+					int index = Integer.parseInt(in.readUTF());
+					int stock = products.get(index).getStock();
+					
+					if(stock <= 0) {
+						out.writeUTF("0");
+					} else {
+						products.get(index).setStock(stock - 1);
+						out.writeUTF("1");
+					}
+				} else if(action.equals("validateStockN")){
+					int index = Integer.parseInt(in.readUTF());
+					int amount = Integer.parseInt(in.readUTF()) - 1;
+					int stock = products.get(index).getStock();
+					
+					if(amount <= stock && stock > 0) {
+						products.get(index).setStock(stock - amount);
+						out.writeUTF("1");
+					} else {						
+						out.writeUTF("0");
+					}
 				}
 
 				saveProducts(products);

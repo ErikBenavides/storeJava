@@ -25,6 +25,10 @@ public class Cliente {
 		}
 
 	}
+    
+    public Socket getClientSocket() {
+    	return clientSocket;
+    }
 
 	public ArrayList<Product> getProducts(){
 		return this.products;
@@ -143,13 +147,15 @@ public class Cliente {
 		in.close();
 		System.out.println(ip + ":" + port); */
 
-		Cliente cliente = new Cliente("localhost", 3000);
+		String ip = "localhost";
+		int port = 3000;
+		Cliente cliente = new Cliente(ip, port);
 		cliente.getProductsData();
 		cliente.downloadImages();
 
 
 		//System.out.println(cliente.getProducts().get(0).getName());
-		Window window = new Window(cliente.getProducts());
+		Window window = new Window(cliente.getProducts(), ip, port);
 		//window.setProducts();
 
 

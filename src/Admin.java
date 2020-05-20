@@ -1,4 +1,5 @@
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import javax.swing.JFileChooser;
@@ -6,14 +7,18 @@ import javax.swing.JFileChooser;
 import java.io.*;
 public class Admin {
 	private Socket clientSocket;
+	private ArrayList<Product> products;
 	private DataInputStream in;
 	private DataOutputStream out;
 	private String ip;
 	private int port;
+	private String path;
 
 	public Admin(String ip, int port){
 		this.ip = ip;
 		this.port = port;
+		this.path = "./admin/";
+		getProductsData();
 	}
 
     private void startConnection() {
@@ -40,24 +45,28 @@ public class Admin {
 			System.out.println("2) Crear producto");
 			System.out.println("3) Eliminar producto");
 			System.out.println("4) Editar producto");
-			System.out.println("6) Salir");
+			System.out.println("5) Salir");
 
 			BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
+			
 			try{
 				res = Integer.parseInt(consoleReader.readLine());
 
 				//Comprobar opcion
+				int i = 0;
 				if(res == 1){
+					for (Product product : products) {
+						System.out.println("Indice: " + i++);
+						System.out.println(product);
+					}
 
 				} else if(res == 2){
 					this.createProduct();
 				} else if(res == 3){
-
+					this.deleteProduct();
 				} else if(res == 4){
 
-				} else if(res == 5){
-
-				} else if(res == 6){
+				} else if(res == 5){				
 					System.out.println("Cerrando ...");
 				} else {
 					System.out.println("Introduce un numero valido");
@@ -66,7 +75,90 @@ public class Admin {
 			} catch(Exception e){
 				e.printStackTrace();
 			}
-		}while(res != 6);
+		}while(res != 5);
+	}
+	
+	private void deleteProduct() {
+		Scanner in = new Scanner(System.in);
+		System.out.println("Introduce el indice del producto a eliminar");
+		int index = in.nextInt();
+		System.out.println(index);
+		System.out.println(products.size());
+		products.remove(index);
+		System.out.println(products.size());
+	}
+			
+	public void getProductsData(){
+		try{
+			startConnection();
+			//Escribir datos del tipo primitivo de una forma portable
+			out = new DataOutputStream(clientSocket.getOutputStream());
+			//Leer datos del tipo primitivo de una forma portable.
+			in = new DataInputStream(clientSocket.getInputStream());
+
+			out.writeUTF("getProductsData");
+			String name = in.readUTF();
+
+			//Recibe el archivo con los datos de los productos
+			reciveFile(path, name);
+			//Deserializa y lo guarda en products
+			loadProducts();
+			out.close();
+			in.close();
+
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+
+
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void loadProducts(){
+		try{
+            FileInputStream fis = new FileInputStream(path + "products.data");
+            ObjectInputStream ois = new ObjectInputStream(fis);
+
+			products = (ArrayList<Product>) ois.readObject();
+
+            ois.close();
+			fis.close();
+			int i = 0;
+			System.out.println("\n\nDeserializado archivo");
+			for (Product product : products) {
+				System.out.println("Indice: " + i++);
+				System.out.println(product);
+			}
+        } catch(Exception e){
+			e.printStackTrace();
+		}
+
+	}
+	
+	private void reciveFile(String path, String name){
+		try{
+			//startConnection();
+			long tam= in.readLong();
+			byte[] b = new byte[1024];
+			//Escribir datos del tipo primitivo de una forma portable
+			out = new DataOutputStream(new FileOutputStream(path + name));
+			long recibidos=0;
+			int n, porcentaje;
+
+			//Código para mostrar mensaje mientras se transmienten los datos
+			while(recibidos < tam){
+				n = in.read(b);
+				out.write(b,0,n);
+				out.flush();
+				recibidos = recibidos + n;
+				porcentaje = (int)(recibidos*100/tam);
+			}
+			out.flush();
+
+			System.out.print("\n\nArchivo recibido\n");
+		} catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	private void createProduct(){

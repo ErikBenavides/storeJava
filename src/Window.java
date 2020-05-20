@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
 import java.util.ArrayList;
 
 
@@ -13,9 +16,14 @@ public class Window extends JFrame implements ActionListener{
 	private int index;
 	private ArrayList<Product> products;
 	private ArrayList<Product> cart;
+	private ArrayList<Integer> productIndex;
 	private JLabel image;
-
-	JLabel lb1;
+	private DataOutputStream out;
+	private DataInputStream in;
+	private Socket clientSocket;
+	private String ip;
+	private int port;	
+	private JLabel lb1;
 	private JLabel name;
 	private JLabel description;
 	private JLabel stock;
@@ -27,13 +35,15 @@ public class Window extends JFrame implements ActionListener{
 
 	}
 
-	public Window(ArrayList<Product> products){
+	public Window(ArrayList<Product> products, String ip, int port){
 		super();
 		this.index = 0;
 		this.products = new ArrayList<>();
 		this.cart = new ArrayList<>();
+		this.productIndex = new ArrayList<>();
 		this.products = products;
-
+		this.ip = ip;
+		this.port = port;
 		this.lb1 = new JLabel();
 		this.name = new JLabel();
 		this.description = new JLabel();
@@ -120,13 +130,47 @@ public class Window extends JFrame implements ActionListener{
 				index--;
 				updateValues();
 		} else if(button.equals("Comprar")){
-			cart.add(products.get(index));
+			//Comprobar existencias
+			int actualStock = Integer.parseInt( validateStock());
+			System.out.println(actualStock);
+			if (actualStock == 0) {
+				JOptionPane.showMessageDialog(this, "No se ha podido agregar al carrito\nPorque no hay stock",
+                        "Estatus",
+                        JOptionPane.INFORMATION_MESSAGE);
+			} else {
+				cart.add(products.get(index));
+				productIndex.add(index);
+				JOptionPane.showMessageDialog(this, "Agregado al carrito correctamente",
+                        "Estatus",
+                        JOptionPane.INFORMATION_MESSAGE);
+			}			
 		} else if(button.equals("Carrito")){
-			CartWindow cartWindow = new CartWindow(cart);
+			CartWindow cartWindow = new CartWindow(cart, productIndex, ip, port);
+		} else if(button.equals("Salir")) {
+			System.exit(0);
 		}
 
-
-
+	}
+	
+	private String validateStock() {
+		try {			
+			
+	        clientSocket = new Socket(ip, port);			
+			//Escribir datos del tipo primitivo de una forma portable
+			out = new DataOutputStream(clientSocket.getOutputStream());
+			//Leer datos del tipo primitivo de una forma portable.
+			in = new DataInputStream(clientSocket.getInputStream());
+			
+			
+			out.writeUTF("validateStock");
+			out.flush();
+			out.writeUTF(String.valueOf(index));
+			out.flush();
+			return in.readUTF();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	private void updateValues(){
