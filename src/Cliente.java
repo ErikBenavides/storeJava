@@ -1,5 +1,6 @@
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.io.*;
 public class Cliente {
 	private ArrayList<Product> products;
@@ -66,6 +67,7 @@ public class Cliente {
 	}
 
 	public void downloadImages(){
+		//descargar cada una de las imagenes
 		for(Product product : products){
 			getProductsImage(product.getImage());
 		}
@@ -77,8 +79,10 @@ public class Cliente {
 			//Leer datos del tipo primitivo de una forma portable.
 			in = new DataInputStream(clientSocket.getInputStream());
 			out.writeUTF("getProductsImage");
+			//solicita la imagen
 			out.writeUTF(name);
-
+			
+			//recibe la imagen 
 			reciveFile("./client/", name);
 		}catch(Exception e){
 			e.printStackTrace();
@@ -139,16 +143,16 @@ public class Cliente {
 	}
 
 	public static void main(String[] args) {
-		/* Scanner in = new Scanner(System.in);
+		Scanner in = new Scanner(System.in);
 		System.out.println("Escribe la direccion");
 		String ip = in.nextLine();
 		System.out.println("Escribe el puerto");
 		int port = in.nextInt();
 		in.close();
-		System.out.println(ip + ":" + port); */
+		System.out.println(ip + ":" + port);
 
-		String ip = "localhost";
-		int port = 3000;
+		//String ip = "localhost";
+		//int port = 3000;
 		Cliente cliente = new Cliente(ip, port);
 		cliente.getProductsData();
 		cliente.downloadImages();

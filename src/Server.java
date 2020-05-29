@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.*;
 
-public class Server implements Serializable{
+public class Server extends Thread implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	private ArrayList<Product> products;
@@ -19,7 +19,7 @@ public class Server implements Serializable{
 		try{
 			//Crear servidor en el puerto
 			path = "./server/";
-			serverSocket = new ServerSocket(3000);
+			serverSocket = new ServerSocket(port);
 			products = new ArrayList<Product>();
 			defaultProducts();
 			saveProducts(products);
@@ -29,67 +29,77 @@ public class Server implements Serializable{
 			e.printStackTrace();
 		}
 	}
+	
+	public void run(){		
+		this.listen();		
+	}
 
 	public void listen(){
 		try{
 			for(;;){
-				//Aceptar de petición de conexión
-				System.out.println("\nEsperando conexion");
-				client = serverSocket.accept();
-				System.out.println("Conexion establecida desde "+client.getInetAddress()+":"+client.getPort());
-
-				//Configuración para la transmisión de datos
-				//Leer datos del tipo primitivo de una forma portable.
-				in= new DataInputStream(client.getInputStream());
-				out = new DataOutputStream(client.getOutputStream());
-
-				//Leer datos con codificación UTF por defecto es utf-8
-				String action = in.readUTF();
-				String name = "";
-
-				if(action.equals("createData")){
-					//Recibe datos - Objeto
-					name = in.readUTF();
-					this.reciveFile(path, name);
-
-					//Deserializa y lo agrega al arreglo
-					products.add( deserializeProduct(path, name) );
-				} else if(action.equals("createImage")){
-					//Recibe imagen
-					name = in.readUTF();
-					this.reciveFile(path, name);
-				} else if(action.equals("getProductsData")){
-					//Enviar datos de los productos
-					this.getProducts();
-
-				} else if(action.equals("getProductsImage")){
-					name = in.readUTF();					
-					sendImage(name);
-				} else if(action.equals("validateStock")) {
-					
-					int index = Integer.parseInt(in.readUTF());
-					int stock = products.get(index).getStock();
-					
-					if(stock <= 0) {
-						out.writeUTF("0");
-					} else {
-						products.get(index).setStock(stock - 1);
-						out.writeUTF("1");
+				synchronized(this){
+					//Aceptar de petición de conexión
+					System.out.println("\nEsperando conexion");
+					client = serverSocket.accept();
+					System.out.println("Conexion establecida desde "+client.getInetAddress()+":"+client.getPort());
+	
+					//Configuración para la transmisión de datos
+					//Leer datos del tipo primitivo de una forma portable.
+					in= new DataInputStream(client.getInputStream());
+					out = new DataOutputStream(client.getOutputStream());
+	
+					//Leer datos con codificación UTF por defecto es utf-8
+					String action = in.readUTF();
+					String name = "";
+	
+					if(action.equals("createData")){
+						//Recibe datos - Objeto
+						name = in.readUTF();
+						this.reciveFile(path, name);
+	
+						//Deserializa y lo agrega al arreglo
+						products.add( deserializeProduct(path, name) );
+					} else if(action.equals("createImage")){
+						//Recibe imagen
+						name = in.readUTF();
+						this.reciveFile(path, name);
+					} else if(action.equals("getProductsData")){
+						//Enviar datos de los productos
+						this.getProducts();
+	
+					} else if(action.equals("getProductsImage")){
+						name = in.readUTF();					
+						sendImage(name);
+					} else if(action.equals("validateStock")) {
+						
+						int index = Integer.parseInt(in.readUTF());
+						int stock = products.get(index).getStock();
+						
+						if(stock <= 0) {
+							out.writeUTF("0");
+						} else {
+							products.get(index).setStock(stock - 1);
+							out.writeUTF("1");
+						}
+					} else if(action.equals("validateStockN")){
+						int index = Integer.parseInt(in.readUTF());
+						int amount = Integer.parseInt(in.readUTF()) - 1;
+						int stock = products.get(index).getStock();
+						
+						if(amount <= stock && stock > 0) {
+							products.get(index).setStock(stock - amount);
+							out.writeUTF("1");
+						} else {						
+							out.writeUTF("0");
+						}
+					} else if(action.equals("deleteProduct")) {
+						int index = Integer.parseInt(in.readUTF());
+						products.remove(index);
 					}
-				} else if(action.equals("validateStockN")){
-					int index = Integer.parseInt(in.readUTF());
-					int amount = Integer.parseInt(in.readUTF()) - 1;
-					int stock = products.get(index).getStock();
-					
-					if(amount <= stock && stock > 0) {
-						products.get(index).setStock(stock - amount);
-						out.writeUTF("1");
-					} else {						
-						out.writeUTF("0");
-					}
+	
+					saveProducts(products);
+				
 				}
-
-				saveProducts(products);
 			}
 		}catch(Exception e){
 			e.printStackTrace();
@@ -143,11 +153,7 @@ public class Server implements Serializable{
 	}
 
 	private void sendFile(File file, String path, String name){
-		try{
-			//this.startConnection();
-
-			//Escribir datos del tipo primitivo de una forma portable
-			//DataOutputStream dos = new DataOutputStream(clientSocket.getOutputStream());
+		try{			
 			//Leer datos del tipo primitivo de una forma portable.
 			dis = new DataInputStream(new FileInputStream(path + name));
 			long fileSize = file.length();
@@ -283,13 +289,17 @@ public class Server implements Serializable{
 	}
 
 	public static void main(String[] args){
-		/* Scanner in = new Scanner(System.in);
+		Scanner in = new Scanner(System.in);
 		System.out.println("Escribe el puerto");
 		int port = in.nextInt();
 		in.close();
-		System.out.println(port); */
-		Server server = new Server(3000);
-		server.listen();
+		System.out.println(port);
+		//Server server = new Server(3000);
+		//server.listen();
+		
+		//Thread server = new Server(3000);
+		Thread server = new Server(port);
+		server.start();
 
 
 

@@ -29,22 +29,20 @@ public class Pdf {
 	public Pdf() {}
 	
 	public Pdf(ArrayList<Product> cart, ArrayList<JTextField> fields, int total) {
-		try {
-			//cart = new ArrayList<Product>();
-			//fields = new ArrayList<JTextField>();
-			//this.cart = cart;
-			//this.fields = fields;
+		try {			
+			//Crear documento
 			document = new Document();
 			PdfWriter.getInstance(document, new FileOutputStream("Recibo.pdf"));			 
 			document.open();
 			
+			//Agregar datos principales de la tienda
 			addChunk("Store - Recibo", 24);
 			addPara("Store.inc", 15);
 			addPara("México, México, Ecatepec de Morelos, Vallarta #12", 12);
 			addPara("Nº de recibo:", 15);
 			addChunk("FO" + System.currentTimeMillis(), 18);
 			
-			
+			//Fecha para agregar al docuento
 			SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");  
 		    Date date = new Date(); 
 			
@@ -52,12 +50,10 @@ public class Pdf {
 			addPara(" ", 12);
 			addPara(" ", 12);
 			
-			
+			//Agrega la tabla de productos
 			PdfPTable table = new PdfPTable(4);
 			addTableHeader(table);
-			
-			
-			//addRows(table);
+									
 			float total1 = 0.0f;			
 			
 			//Agregar datos del carro a la tabla

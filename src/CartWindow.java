@@ -52,9 +52,11 @@ public class CartWindow extends JFrame implements ActionListener{
 	}
 
 	private void components() {
+		//Recorre los productos y crea las cards
 		for(Product product : cart){
 			this.add(productCard(product));
 		}
+		//Agrega un boton al final
 		JButton buy = new JButton("Finalizar compra");
 		this.add(buy);
 		buy.addActionListener(this);
@@ -65,19 +67,18 @@ public class CartWindow extends JFrame implements ActionListener{
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-		//JPanel close = new JPanel();
+		//Crear los botones para borrar
 		JButton button = new JButton("Borrar" + deleteIndex++);
-		//close.setLayout(new FlowLayout());
-		//close.add(new JLabel("Nombre: " + product.getName()));
-		//close.add(button);
-
-		//panel.add(close);
+		
 		button.addActionListener(this);
-
+		
+		//Agrega al panel el boton, el nombre y el precio del producto
 		panel.add(button);
 		panel.add(new JLabel("Nombre: " + product.getName()));
 		panel.add(new JLabel("Precio: " + product.getPrice()));
 
+		//Se agrega un campo en el que el usuario puede introducir
+		//la cantidad
 		JPanel field = new JPanel();
 		field.setLayout(new FlowLayout());
 		field.add(new JLabel("Cantidad:"));
@@ -93,15 +94,17 @@ public class CartWindow extends JFrame implements ActionListener{
 	
 	private void validateStockElements() {
 		for(int i = 0; i < productIndex.size(); i++) {
+			//Comprueba si el compo fue modificado
 			if(!fields.get(i).getText().equals("1")) {
 				
 				int actualStock = Integer.parseInt(validateStock(productIndex.get(i), fields.get(i).getText()));
-				
+				//Ya no hay stock
 				if (actualStock == 0) {
 					JOptionPane.showMessageDialog(this, "No se ha podido agregar al carrito\nPorque no hay stock",
 	                        "Estatus",
 	                        JOptionPane.INFORMATION_MESSAGE);
-				} else {				
+				} else {		
+					//La cantidad es correcta y se modifico con exito
 					JOptionPane.showMessageDialog(this,"Cantidad modificada correctamente\n" + cart.get(i).getName(),
 	                        "Estatus",
 	                        JOptionPane.INFORMATION_MESSAGE);
@@ -138,14 +141,16 @@ public class CartWindow extends JFrame implements ActionListener{
 	private void getTotal() {
 		validateStockElements();
 		
+		//Calcula el total de los productos
 		for(int i = 0; i < cart.size(); i++){
 			total += cart.get(i).getPrice() * Integer.parseInt( fields.get(i).getText());
 		}
 		System.out.println(total);
+		//Muestra mensaje de exito
 		JOptionPane.showMessageDialog(this, "Gracias por comprar\nEl Recibo se ha generado con exito\nTotal: " + String.valueOf(total),
                                           "Compra finalizada",
                                           JOptionPane.INFORMATION_MESSAGE);
-		
+		//Crea el archivo PDF
 		Pdf pdf = new Pdf(cart, fields, total);
 	}
 

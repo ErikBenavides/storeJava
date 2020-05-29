@@ -55,6 +55,9 @@ public class Admin {
 				//Comprobar opcion
 				int i = 0;
 				if(res == 1){
+					getProductsData();
+					loadProducts();
+					
 					for (Product product : products) {
 						System.out.println("Indice: " + i++);
 						System.out.println(product);
@@ -79,13 +82,30 @@ public class Admin {
 	}
 	
 	private void deleteProduct() {
-		Scanner in = new Scanner(System.in);
+		Scanner inScanner = new Scanner(System.in);
 		System.out.println("Introduce el indice del producto a eliminar");
-		int index = in.nextInt();
-		System.out.println(index);
+		String index = inScanner.nextLine();
+		/*System.out.println(index);
 		System.out.println(products.size());
 		products.remove(index);
-		System.out.println(products.size());
+		System.out.println(products.size());*/
+		
+		try{
+			startConnection();
+			//Escribir datos del tipo primitivo de una forma portable
+			out = new DataOutputStream(clientSocket.getOutputStream());
+			//Leer datos del tipo primitivo de una forma portable.
+			in = new DataInputStream(clientSocket.getInputStream());
+
+			out.writeUTF("deleteProduct");
+			out.writeUTF(index);
+			
+			out.close();
+			in.close();
+
+		} catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 			
 	public void getProductsData(){
@@ -278,8 +298,29 @@ public class Admin {
 
 
 	public static void main(String[] args) {
-        Admin admin = new Admin("localhost", 3000);
-		admin.menu();
+		try {
+			BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
+			System.out.println("Escribe la direccion");
+			String ip = consoleReader.readLine();
+			System.out.println("Escribe el puerto");
+			int port = Integer.parseInt(consoleReader.readLine());
+			
+			Admin admin = new Admin(ip, port);
+			admin.menu();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		/*
+		Scanner in = new Scanner(System.in);
+		System.out.println("Escribe la direccion");
+		String ip = in.nextLine();
+		System.out.println("Escribe el puerto");
+		int port = in.nextInt();
+		in.close();
+		System.out.println(ip + ":" + port);*/
+		
+        //Admin admin = new Admin("localhost", 3000);
+		
     }
 
 
